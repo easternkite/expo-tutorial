@@ -1,4 +1,4 @@
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { useState, useRef } from 'react';
 import { captureRef } from 'react-native-view-shot';
 
@@ -15,6 +15,7 @@ import EmojiPicker from "@/components/EmojiPicker";
 import EmojiList from "@/components/EmojiList";
 import EmojiSticker from "@/components/EmojiSticker";
 const PlaceHolderImage = require('@/assets/images/background-image.png');
+import domtoimage from 'dom-to-image';
 
 export default function Index() {
   const imageRef = useRef<View>(null); // reference variable to store the reference of the screenshot image captured
@@ -56,18 +57,35 @@ export default function Index() {
   }
 
   const onSaveImageAsync = async () => {
-    try {
-      const localUri = await captureRef(imageRef, {
-        width: 320,
-        height: 440,   
-      });
-
-      await MediaLibrary.saveToLibraryAsync(localUri);
-      if (localUri) {
-        alert("Saved");
+    if (Platform.OS !== 'web') {
+      try {
+        const localUri = await captureRef(imageRef, {
+          width: 320,
+          height: 440,   
+        });
+  
+        await MediaLibrary.saveToLibraryAsync(localUri);
+        if (localUri) {
+          alert("Saved");
+        }
+      } catch (error) {
+        console.log(error);
       }
-    } catch (error) {
-      console.log(error);
+    } else {
+      try {
+        const dataUrl = await domtoimage.toJpeg(imageRef.current, {
+          quality: 0.95,
+          width: 320,
+          height: 440
+        });
+
+        let link = document.createElement('a');
+        link.download = 'sticker.smash.jpeg';
+        link.href = dataUrl;
+        link.click();
+      } catch (e) {
+        console.log(e)
+      }
     }
   };
 
